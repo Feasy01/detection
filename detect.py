@@ -83,11 +83,10 @@ class mjpgServer(BaseHTTPRequestHandler):
         global camera
         global cam_cleaner
         global model
+        global device
         conf_thres = 0.4
         iou_thres = 0.5
-        names = model.module.names if hasattr(model, 'module') else model.names
         print('connection from:', self.address_string())
-
         if self.ip is None or self.hostname is None:
             self.ip, _ = getIP('eth1')  # desktop: enp2s0
             self.hostname = Socket.gethostname()
@@ -110,24 +109,18 @@ class mjpgServer(BaseHTTPRequestHandler):
                         # wait for next frame
                         # time.sleep(1/30)
                         continue
-                    timestamp = datetime.datetime.now()
                     last_frame_id = cam_cleaner.last_frame_id
-                    frame = cam_cleaner.last_frame
-                    dataset = LoadStreams(frame, img_size=imgsz)
-                    bs = len(dataset)  # batch_size
-                    t0 = time.time()
-                    for img, im0s, vid_cap in dataset:
+                    frames = cam_cleaner.last_frame
+                    dataset = LoadStreams(frames, img_size=imgsz)
+                    for img, im0s in dataset:
                         img = torch.from_numpy(img).to(device)
                         if len(img.shape) == 3:
                             img = img[None]
-                        t1 = time_sync()
                         pred = model(img, augment=False, visualize=False)[0]
                         pred = non_max_suppression(pred, conf_thres, iou_thres, agnostic=False, classes=None, max_det=1000)
-                        t2 = time_sync()
                         # Process predictions
                         for i, det in enumerate(pred):  # detections per image
                             im0, frame = im0s.copy(), getattr(dataset, 'frame', 0)
-                            gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]  # normalization gain whwh
                             if len(det):
                                 det[:, :4] = scale_coords(img.shape[2:], det[:, :4], im0.shape).round()
                                 # Write results
@@ -240,18 +233,18 @@ def main(opt):
 
 
 if __name__ == "__main__":
+    global model
+    global device
     webcam = True
     weights = 'yolov5s.pt'
     imgsz = 640
     # Initialize
     set_logging()
-    device = select_device('cpu')
+    device = select_device(0)
     # Load model
     opt = handleArgs()
-    global model
     model = attempt_load(weights, map_location=device)  # load FP32 model
     stride = int(model.stride.max())  # model stride
-    names = model.module.names if hasattr(model, 'module') else model.names  # get class names
     imgsz = check_img_size(imgsz, s=stride)  # check image size
     cudnn.benchmark = True  # set True to speed up constant image size inference
     if device.type != 'cpu':
