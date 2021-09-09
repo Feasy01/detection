@@ -85,7 +85,6 @@ class mjpgServer(BaseHTTPRequestHandler):
         global model
         conf_thres = 0.4
         iou_thres = 0.5
-        model = None
         names = model.module.names if hasattr(model, 'module') else model.names
         print('connection from:', self.address_string())
 
