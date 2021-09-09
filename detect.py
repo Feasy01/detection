@@ -112,32 +112,32 @@ class mjpgServer(BaseHTTPRequestHandler):
                     last_frame_id = cam_cleaner.last_frame_id
                     frames = cam_cleaner.last_frame
                     dataset = LoadStreams(frames, img_size=imgsz)
-                    for img, im0s in dataset:
-                        img = torch.from_numpy(img).to(device)
-                        if len(img.shape) == 3:
-                            img = img[None]
-                        pred = model(img, augment=False, visualize=False)[0]
-                        pred = non_max_suppression(pred, conf_thres, iou_thres, agnostic=False, classes=None, max_det=1000)
-                        # Process predictions
-                        for i, det in enumerate(pred):  # detections per image
-                            im0, frame = im0s.copy(), getattr(dataset, 'frame', 0)
-                            if len(det):
-                                det[:, :4] = scale_coords(img.shape[2:], det[:, :4], im0.shape).round()
-                                # Write results
-                                for *xyxy, conf, cls in reversed(det):
-                                    c = int(cls)  # integer class
-                                    plot_one_box(xyxy, im0, label=f'{conf * 100:.0f}%', color=colors(c, True), line_thickness=3)
-                        resized = cv2.resize(im0, (800, 450), interpolation=cv2.INTER_AREA)
-                        ret, jpg = cv2.imencode('.jpg', resized,[cv2.IMWRITE_JPEG_QUALITY, 50, cv2.IMWRITE_JPEG_OPTIMIZE, 1])
-                        # print 'Compression ratio: %d4.0:1'%(compress(img.size,jpg.size))
-                        self.wfile.write("--jpgboundary\r\n".encode("utf-8"))
-                        self.send_header('Content-type', 'image/jpeg')
-                        # self.send_header('Content-length',str(tmpFile.len))
-                        self.send_header('Content-length', str(jpg.size))
-                        self.end_headers()
-                        # self.wfile.write("\n")
-                        self.wfile.write(jpg.tostring())
-                        # time.sleep(0.05) #20fps
+                    im0s = img.copy()
+                    img = torch.from_numpy(img).to(device)
+                    if len(img.shape) == 3:
+                        img = img[None]
+                    pred = model(img, augment=False, visualize=False)[0]
+                    pred = non_max_suppression(pred, conf_thres, iou_thres, agnostic=False, classes=None, max_det=1000)
+                    # Process predictions
+                    for i, det in enumerate(pred):  # detections per image
+                        im0, frame = im0s.copy(), getattr(dataset, 'frame', 0)
+                        if len(det):
+                            det[:, :4] = scale_coords(img.shape[2:], det[:, :4], im0.shape).round()
+                            # Write results
+                            for *xyxy, conf, cls in reversed(det):
+                                c = int(cls)  # integer class
+                                plot_one_box(xyxy, im0, label=f'{conf * 100:.0f}%', color=colors(c, True), line_thickness=3)
+                    resized = cv2.resize(im0, (800, 450), interpolation=cv2.INTER_AREA)
+                    ret, jpg = cv2.imencode('.jpg', resized,[cv2.IMWRITE_JPEG_QUALITY, 50, cv2.IMWRITE_JPEG_OPTIMIZE, 1])
+                    # print 'Compression ratio: %d4.0:1'%(compress(img.size,jpg.size))
+                    self.wfile.write("--jpgboundary\r\n".encode("utf-8"))
+                    self.send_header('Content-type', 'image/jpeg')
+                    # self.send_header('Content-length',str(tmpFile.len))
+                    self.send_header('Content-length', str(jpg.size))
+                    self.end_headers()
+                    # self.wfile.write("\n")
+                    self.wfile.write(jpg.tostring())
+                    # time.sleep(0.05) #20fps
                     # cv2.imshow('The last frame', resized)
                 else:
                     print('no image from camera')
