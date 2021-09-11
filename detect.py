@@ -55,7 +55,7 @@ def run(weights='yolov5s.pt',  # model.pt path(s)
         ):
     save_img = not nosave and not source.endswith('.txt')  # save inference images
     webcam = source.isnumeric() or source.endswith('.txt') or source.lower().startswith(
-        ('rtsp://', 'rtmp://', 'http://', 'https://')) #true
+        ('rtsp://', 'rtmp://', 'http://', 'https://'))
     myStream = stream()
     # Directories
     save_dir = increment_path(Path(project) / name, exist_ok=exist_ok)  # increment run
@@ -172,9 +172,9 @@ def run(weights='yolov5s.pt',  # model.pt path(s)
             # print(f'{s}Done.' + valueFPS + ' FPS')
 
             # Stream results
-            # if view_img:
-            #     cv2.imshow(str(p), im0)
-            #     cv2.waitKey(1)  # 1 millisecond
+            if view_img:
+                cv2.imshow(str(p), im0)
+                cv2.waitKey(1)  # 1 millisecond
 
             myStream.setNewImg(im0)
 
