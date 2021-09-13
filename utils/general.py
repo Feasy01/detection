@@ -28,6 +28,8 @@ from utils.downloads import gsutil_getsize
 from utils.metrics import box_iou, fitness
 from utils.torch_utils import init_torch_seeds
 
+from PIL import ImageFont, ImageDraw, Image
+
 # Settings
 torch.set_printoptions(linewidth=320, precision=5, profile='long')
 np.set_printoptions(linewidth=320, formatter={'float_kind': '{:11.5g}'.format})  # format short g, %precision=5
@@ -720,3 +722,62 @@ def increment_path(path, exist_ok=False, sep='', mkdir=False):
     if not dir.exists() and mkdir:
         dir.mkdir(parents=True, exist_ok=True)  # make directory
     return path
+
+def scaleFrame(img, scale):
+
+    widthShape = int(img.shape[1] * scale / 100)
+    heightShape = int(img.shape[0] * scale / 100)
+    dim = (widthShape, heightShape)
+    resized = cv2.resize(img, dim, interpolation=cv2.INTER_AREA)
+
+    return resized
+
+def additionalToScreen(img):
+    overlay = img.copy()
+    x, y, w, h = 0, overlay.shape[0] - int(overlay.shape[0] * 0.185), overlay.shape[1], int(overlay.shape[0] * 0.185)  # Rectangle parameters
+    cv2.rectangle(overlay, (x, y), (x + w, y + h), (0, 0, 0), -1)  # A filled rectangle
+    alpha = 0.35  # Transparency factor.
+    image_new = cv2.addWeighted(overlay, alpha, img, 1 - alpha, 0)
+
+    calcFontSizeGPS = int((overlay.shape[1] * 15) / 960)
+    calcFontSizeKmph = int((overlay.shape[1] * 20) / 960)
+    calcFontSizeSpeed = int((overlay.shape[1] * 60) / 960)
+
+    ## Use Roboto-Regular.ttf to write vehicle speed.
+    fontRoboto = "fonts/Roboto-Regular.ttf"
+    fontSourceSansProRegular = "fonts/SourceSansPro-Regular.ttf"
+    fontVehicle = ImageFont.truetype(fontSourceSansProRegular, calcFontSizeSpeed)
+    fontKmph = ImageFont.truetype(fontSourceSansProRegular, calcFontSizeKmph)
+    fontGPS = ImageFont.truetype(fontRoboto, calcFontSizeGPS)
+    img_pil = Image.fromarray(image_new)
+
+    b, g, r, a = 255, 255, 255, 1
+    draw = ImageDraw.Draw(img_pil)
+
+    print(overlay.shape[0], overlay.shape[1])
+
+    draw.text((overlay.shape[1] * 0.524, int(overlay.shape[0]*0.844)), "0", font=fontVehicle, fill=(b, g, r, a))
+    draw.text((overlay.shape[1] * 0.517, int(overlay.shape[0]*0.935)), "kmph", font=fontKmph, fill=(b, g, r, a))
+    draw.text((int(overlay.shape[1] * 0.865), int(overlay.shape[0]*0.944)), "54º23'N  18º38'E", font=fontGPS, fill=(b, g, r, a))
+    # x_offset = y_offset = 50
+
+    img = np.array(img_pil)
+
+    w6aSign = cv2.imread("images/w6a.png", 0)
+    warningSign = cv2.imread("images/warning.png", 0)
+
+    resizedw6aSign = scaleFrame(w6aSign, 7)
+    resizedWarningSign = scaleFrame(warningSign, 6.5)
+
+    print(resizedw6aSign.shape, resizedWarningSign.shape)
+
+    y1, y2 = 415, resizedw6aSign.shape[0] + 415
+    x1, x2 = 300, resizedw6aSign.shape[1] + 300
+    # alpha_s = resizedw6aSign[:, :, 3] / 255.0
+    # alpha_l = 1.0 - alpha_s
+    #
+    # for c in range(0, 3):
+    #     img[y1:y2, x1:x2, c] = (alpha_s * resizedw6aSign[:, :, c] +
+    #                             alpha_l * img[y1:y2, x1:x2, c])
+
+    return img
