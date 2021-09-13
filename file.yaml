@@ -2,7 +2,7 @@ train: ./data/train/
 val: ./data/valid/
 
 # number of classes
-nc: 6
+nc: 2
 
 # class names
-names: ['', '', '', '', '', 'person']
+names: ['person', 'w6a']

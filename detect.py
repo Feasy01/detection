@@ -3,6 +3,8 @@
 Usage:
     $ python path/to/detect.py --source path/to/img.jpg --weights yolov5s.pt --img 640
 """
+# python3 detect.py --source "rtsp://admin:Pesa1234@10.10.1.185:554/Streaming/Channels/101" --weights best.pt --imgsz 416 --view-img
+
 
 import argparse
 import sys
@@ -12,6 +14,7 @@ from pathlib import Path
 import cv2
 import torch
 import torch.backends.cudnn as cudnn
+from stream import stream
 
 FILE = Path(__file__).absolute()
 sys.path.append(FILE.parents[0].as_posix())  # add yolov5/ to path
@@ -53,7 +56,7 @@ def run(weights='yolov5s.pt',  # model.pt path(s)
     save_img = not nosave and not source.endswith('.txt')  # save inference images
     webcam = source.isnumeric() or source.endswith('.txt') or source.lower().startswith(
         ('rtsp://', 'rtmp://', 'http://', 'https://'))
-
+    myStream = stream()
     # Directories
     save_dir = increment_path(Path(project) / name, exist_ok=exist_ok)  # increment run
     (save_dir / 'labels' if save_txt else save_dir).mkdir(parents=True, exist_ok=True)  # make dir
@@ -172,6 +175,8 @@ def run(weights='yolov5s.pt',  # model.pt path(s)
             if view_img:
                 cv2.imshow(str(p), im0)
                 cv2.waitKey(1)  # 1 millisecond
+
+            myStream.setNewImg(im0)
 
             # Save results (image with detections)
             if save_img:
