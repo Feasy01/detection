@@ -759,25 +759,26 @@ def additionalToScreen(img):
     draw.text((overlay.shape[1] * 0.524, int(overlay.shape[0]*0.844)), "0", font=fontVehicle, fill=(b, g, r, a))
     draw.text((overlay.shape[1] * 0.517, int(overlay.shape[0]*0.935)), "kmph", font=fontKmph, fill=(b, g, r, a))
     draw.text((int(overlay.shape[1] * 0.865), int(overlay.shape[0]*0.944)), "54º23'N  18º38'E", font=fontGPS, fill=(b, g, r, a))
-    # x_offset = y_offset = 50
+    x_offset = y_offset = 50
 
     img = np.array(img_pil)
 
-    w6aSign = cv2.imread("images/w6a.png", 0)
-    warningSign = cv2.imread("images/warning.png", 0)
+    w6aSign = cv2.imread("images/w6a.png", -1)
+    # warningSign = cv2.imread("images/warning.png", -1)
 
     resizedw6aSign = scaleFrame(w6aSign, 7)
-    resizedWarningSign = scaleFrame(warningSign, 6.5)
+    # resizedWarningSign = scaleFrame(warningSign, 6.5)
 
-    print(resizedw6aSign.shape, resizedWarningSign.shape)
+    print(resizedw6aSign.shape)
 
-    y1, y2 = 415, resizedw6aSign.shape[0] + 415
-    x1, x2 = 300, resizedw6aSign.shape[1] + 300
-    # alpha_s = resizedw6aSign[:, :, 3] / 255.0
-    # alpha_l = 1.0 - alpha_s
-    #
-    # for c in range(0, 3):
-    #     img[y1:y2, x1:x2, c] = (alpha_s * resizedw6aSign[:, :, c] +
-    #                             alpha_l * img[y1:y2, x1:x2, c])
+
+    y1, y2 = y_offset + 415, y_offset + resizedw6aSign.shape[0] + 415
+    x1, x2 = x_offset + 300, x_offset + resizedw6aSign.shape[1] + 300
+    alpha_s = resizedw6aSign[:, :, 3] / 255.0
+    alpha_l = 1.0 - alpha_s
+
+    for c in range(0, 3):
+        img[y1:y2, x1:x2, c] = (alpha_s * resizedw6aSign[:, :, c] +
+                                alpha_l * img[y1:y2, x1:x2, c])
 
     return img

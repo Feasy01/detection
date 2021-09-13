@@ -172,10 +172,10 @@ def run(weights='yolov5s.pt',  # model.pt path(s)
             # valueFPS = '{:.2f}'.format(1/(t2-t1))
             # print(f'{s}Done.' + valueFPS + ' FPS')
 
+            im0 = additionalToScreen(im0)
             # Stream results
             if view_img:
                 cv2.imshow(str(p), im0)
-                im0 = additionalToScreen(im0)
                 cv2.waitKey(1)  # 1 millisecond
 
             myStream.setNewImg(im0)
