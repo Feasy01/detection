@@ -2,7 +2,7 @@
 
 from copy import copy
 from pathlib import Path
-
+from shapely.geometry import box, Polygon
 import cv2
 import math
 import matplotlib
@@ -43,6 +43,42 @@ class Colors:
 colors = Colors()  # create instance for 'from utils.plots import colors'
 
 
+def verify(xyxy2, coords):
+    # opencv topLeft ->botRigth
+    # Polygon BottomRigt->BottomLeft->TopLeft->TopRight
+    p1 = Polygon([(coords[0][0], coords[0][1]), (coords[1][0], coords[1][1]), (coords[2][0], coords[2][1]),
+                  (coords[3][0], coords[3][1])])
+    p2 = Polygon([(xyxy2[0], xyxy2[1]), (xyxy2[2], xyxy2[1]), (xyxy2[2], xyxy2[3]), (xyxy2[0], xyxy2[3])])
+    print(intersection=p1.intersects(p2))
+
+    xyxy = []
+    xyxy.append(int(xyxy2[0]))
+    xyxy.append(int(xyxy2[1]))
+    xyxy.append(int(xyxy2[2]))
+    xyxy.append(int(xyxy2[3]))
+
+    print(xyxy[0])
+    print(xyxy[1])
+    print(xyxy[2])
+    print(xyxy[3])
+    print(coords[2][1])
+    gradient = (coords[2][0] + coords[1][0]) / (coords[2][1] + coords[1][1])
+    print(gradient)
+    #  below top line          and  [bottom corners in the rectangle                   or left corner out but right corner in               or right corner out but left corner in               or  right corner out but left corner below the gradient
+    if ((xyxy[3] >= coords[2][1]) and ((coords[2][0] <= xyxy[0] and xyxy[2] <= coords[3][0]) or (
+            coords[2][0] > xyxy[0] and (xyxy[2] > coords[2][0])) or (
+                                               coords[3][0] < xyxy[2] and (xyxy[0] < coords[3][0])) or (
+                                               (coords[3][0] < xyxy[2]) and (xyxy[0] > coords[3][0]) and (
+                                               xyxy[3] > xyxy[2] / gradient)) or (
+                                               coords[2][0] > xyxy[0] and (xyxy[2] > coords[2][0]) and xyxy[3] > xyxy[
+                                           2] / gradient) or ((xyxy[0] < coords[2][0]) and (xyxy[2] > coords[3][0])))):
+
+        detected = 1
+        print("detected")
+    else:
+        detected = 0
+        print("not detected")
+    return detected
 def hist2d(x, y, n=100):
     # 2d histogram used in labels.png and evolve.png
     xedges, yedges = np.linspace(x.min(), x.max(), n), np.linspace(y.min(), y.max(), n)
@@ -84,7 +120,7 @@ def plot_one_box(x, im, color=(128, 128, 128), label=None, line_thickness=3, pro
         tf = max(tl - 1, 1)  # font thickness
         t_size = cv2.getTextSize(label, 0, fontScale=tl / 3, thickness=tf)[0]
         c2 = c1[0] + t_size[0]+10, c1[1] - t_size[1] -10
-        cv2.rectangle(im, (c1[0]+deltax-10,c1[1]-10), (c2[0]+deltax,c2[1]-10), color, 2, cv2.LINE_AA)  # filled
+       # cv2.rectangle(im, (c1[0]+deltax-10,c1[1]-10), (c2[0]+deltax,c2[1]-10), color, 2, cv2.LINE_AA)  # filled
         cv2.putText(im, label, (c1[0]+deltax, c1[1] - 15), 0, tl / 3, [225, 255, 255], thickness=tf, lineType=cv2.LINE_AA)
 
 
